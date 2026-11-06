@@ -351,13 +351,20 @@ let DB=null, ROOT=null, DL=null; const dirty=new Set(); let saveTimer=null, flus
 const LS="huisboekje-v1";
 function setStatus(text,kind=""){S.status=text;S.statusKind=kind;const el=$("#status");if(el){el.textContent=text;el.className="status "+kind}}
 function baseStatus(){ if(S.demo) return setStatus("Voorbeeld · niet opgeslagen","demo");
-  setStatus(S.backend==="db"?"Opgeslagen in je account (privé)":"Opgeslagen in deze browser","ok"); }
+  if(S.backend==="local"&&S.apiNote) return setStatus("Server niet ingesteld: alleen in deze browser","err");
+  setStatus(S.backend==="db"?"Opgeslagen in je account (privé)":S.backend==="api"?"Opgeslagen op je eigen server":"Opgeslagen in deze browser","ok"); }
 function save(key){ if(S.demo) return; dirty.add(key); clearTimeout(saveTimer); setStatus("Opslaan…"); saveTimer=setTimeout(flush,700); }
 async function flush(){
   if(flushing){saveTimer=setTimeout(flush,400);return}
   flushing=true; const keys=[...dirty]; dirty.clear();
   try{
-    if(S.backend==="db"){
+    if(S.backend==="api"){
+      const r=await fetch("/api/data",{method:"PUT",credentials:"same-origin",redirect:"manual",headers:{"content-type":"application/json","if-match":String(S.ver||0)},body:JSON.stringify({state:{data:S.data,months:S.months}})});
+      if(r.type==="opaqueredirect"||r.status===401||r.status===403) throw {code:"auth",message:"je sessie is verlopen. Herlaad de pagina en log opnieuw in."};
+      if(r.status===409) throw {code:"conflict",message:"op een ander apparaat gewijzigd. Herlaad de pagina."};
+      const j=await r.json().catch(()=>({})); if(!r.ok||!j.ok) throw {code:"api",message:j.error||("serverfout "+r.status)};
+      S.ver=j.version; try{ localStorage.setItem(LS,JSON.stringify({data:S.data,months:S.months})); }catch(_){}
+    } else if(S.backend==="db"){
       for(const k of keys){
         if(k==="root") await ROOT.set(JSON.parse(JSON.stringify(S.data)));
         else { const items=S.months[k]||[]; const ref=ROOT.collection("maanden").doc("m"+k);
@@ -394,6 +401,16 @@ async function boot(){
       }
     }catch(e){ S.backend="local"; DB=null; ROOT=null; }
   } else S.backend="local";
+  /* Eigen website (Cloudflare Pages): gegevens via /api/data, afgeschermd door Cloudflare Access. */
+  if(S.backend!=="db"&&!(window.claude&&window.claude.use)){
+    try{
+      const r=await withTimeout(fetch("/api/data",{credentials:"same-origin",redirect:"manual",headers:{accept:"application/json"}}),10000);
+      const isJson=(r.headers.get("content-type")||"").includes("json");
+      if(r.ok&&isJson){ const j=await r.json(); if(j.ok){ S.backend="api"; S.ver=j.version||0;
+          if(j.state&&j.state.data){ S.data=migrate(j.state.data); S.months=j.state.months||{}; S.demo=false; } } }
+      else if(isJson&&r.status>=400) S.apiNote=true;
+    }catch(e){}
+  }
   if(S.backend==="local"){
     try{ const raw=localStorage.getItem(LS); if(raw){ const v=JSON.parse(raw); S.data=migrate(v.data); S.months=v.months||{}; S.demo=false; } }catch(e){}
   }
@@ -453,6 +470,7 @@ function renderNav(){
     if(k==="kalender"&&late) c=`<span class="count" title="Verlopen taken">${late}</span>`;
     return `<a href="#${k}"${S.view===k?' aria-current="page"':""}>${l}${c}</a>`}).join("");
   $("#foot").innerHTML=`<button class="btn small ghost" data-act="export-json">Back-up maken</button><button class="btn small ghost" data-act="import-json">Back-up terugzetten</button><button class="btn small ghost" data-act="export-csv">Transacties als CSV</button>`+
+   (S.backend==="api"?`<a class="btn small ghost" href="/cdn-cgi/access/logout">Uitloggen</a>`:"")+
    (S.demo?"":`<button class="btn small ghost danger" data-act="wipe">${S.confirm==="wipe"?"Klik nogmaals: alles wissen":"Alles wissen"}</button>`);
 }
 function header(title,sub,period=true){
@@ -461,7 +479,7 @@ function header(title,sub,period=true){
    <div class="period">${period?`<select id="sel-year" aria-label="Jaar">${ys.map(y=>`<option${y===S.year?" selected":""}>${y}</option>`).join("")}</select>
    <select id="sel-month" aria-label="Maand"><option value="-1">Heel jaar</option>${MONTHS_L.map((m,i)=>`<option value="${i}"${i===S.month?" selected":""}>${m}</option>`).join("")}</select>`:""}
    <span class="status ${S.statusKind}" id="status">${esc(S.status)}</span></div></div>`
-  + (S.demo?`<div class="banner"><p><b>Je kijkt naar voorbeeldgegevens.</b> Probeer alles gerust uit: niets wordt opgeslagen. Klaar om te beginnen? Dan start je met een leeg huisboekje${S.backend==="db"?", privé opgeslagen in je account":""}.</p>
+  + (S.demo?`<div class="banner"><p><b>Je kijkt naar voorbeeldgegevens.</b> Probeer alles gerust uit: niets wordt opgeslagen. Klaar om te beginnen? Dan start je met een leeg huisboekje${S.backend==="db"?", privé opgeslagen in je account":S.backend==="api"?", opgeslagen op je eigen server":""}.</p>
    <div class="acts"><button class="btn primary" data-act="start">Begin met eigen gegevens</button><button class="btn" data-act="start-budget">Begin, met deze begroting als basis</button></div></div>`:"");
 }
 
@@ -758,6 +776,7 @@ function doImport(){ const rows=importParse().filter(r=>!r.dup&&r.date); const t
 
 /* ---------- Back-up ---------- */
 async function download(filename,data){
+  if(!(window.claude&&window.claude.use)){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type:filename.endsWith(".json")?"application/json":"text/csv"})); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000); return; }
   if(DL){ try{ await DL.save({filename,data}); toast("Bestand klaargezet om op te slaan."); return; }catch(e){ if(e&&e.code==="declined") return; } }
   toast("Downloaden kan in deze weergave niet. Open het huisboekje via claude.ai."); }
 function csvCell(v){ v=String(v??""); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }

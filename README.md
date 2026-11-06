@@ -8,6 +8,8 @@ Persoonlijke administratie voor financiën en belastingen. Deze map is de **stan
 
 [`dashboard.html`](dashboard.html) is een interactief dashboard voor dit huisboekje: overzicht met grafieken, transacties (met import van je bankexport), begroting, belastingen (checklist, box 3-schatting, aftrekposten), vermogen, doelen en kalender. Gepubliceerd op https://claude.ai/artifact/8mryN2gaiQgVM6Abh3yfAz. Je gegevens worden daar privé in je eigen account bewaard, niet in deze repository.
 
+Wil je het als eigen website met inlog? Zie [`website/README.md`](website/README.md) (Cloudflare Pages + Access).
+
 ## Structuur
 
 | Map | Wat | Hoe vaak |
