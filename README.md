@@ -4,6 +4,10 @@ Persoonlijke administratie voor financiën en belastingen. Deze map is de **stan
 
 > ⚠️ **Privacy:** zet hier nooit je BSN, wachtwoorden, DigiD-codes of volledige rekeningnummers in. Houd deze repository **privé**. Scans van documenten bewaar je in je eigen (versleutelde) opslag; hier noteer je alleen *waar* ze staan.
 
+## Dashboard
+
+[`dashboard.html`](dashboard.html) is een interactief dashboard voor dit huisboekje: overzicht met grafieken, transacties (met import van je bankexport), begroting, belastingen (checklist, box 3-schatting, aftrekposten), vermogen, doelen en kalender. Gepubliceerd op https://claude.ai/artifact/8mryN2gaiQgVM6Abh3yfAz. Je gegevens worden daar privé in je eigen account bewaard, niet in deze repository.
+
 ## Structuur
 
 | Map | Wat | Hoe vaak |
