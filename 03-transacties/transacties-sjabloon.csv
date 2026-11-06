@@ -1,0 +1,4 @@
+datum,omschrijving,tegenpartij,bedrag,categorie,subcategorie,fiscaal_relevant,bewijs_locatie,opmerking
+2026-01-01,Voorbeeld boodschappen,Supermarkt,-45.30,Huishouden,Boodschappen,nee,,
+2026-01-25,Salaris januari,Werkgever,2500.00,Inkomen,Salaris,nee,,
+2026-01-15,Gift goed doel,ANBI-stichting,-50.00,Giften,Periodieke gift,ja,Drive/Belasting/2026/giften,

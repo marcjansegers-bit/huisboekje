@@ -1,0 +1,10 @@
+peildatum,soort,omschrijving,instelling,laatste_4_cijfers,waarde,box,opmerking
+JJJJ-01-01,Bezitting,Betaalrekening,,,,3,
+JJJJ-01-01,Bezitting,Spaarrekening,,,,3,
+JJJJ-01-01,Bezitting,Beleggingsrekening,,,,3,
+JJJJ-01-01,Bezitting,Crypto,,,,3,
+JJJJ-01-01,Bezitting,Eigen woning (WOZ),,,,1,niet in box 3
+JJJJ-01-01,Bezitting,Pensioen/lijfrente,,,,1,niet in box 3
+JJJJ-01-01,Schuld,Hypotheek eigen woning,,,,1,
+JJJJ-01-01,Schuld,Studieschuld,,,,3,
+JJJJ-01-01,Schuld,Overige lening,,,,3,

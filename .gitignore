@@ -1,0 +1,10 @@
+# Nooit gevoelige bestanden committen
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.zip
+geheim/
+prive/
+.DS_Store
